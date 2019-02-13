@@ -125,28 +125,22 @@ int main(int argc, char **argv) {
   // master itself becomes worker 0
   worker(0);
 
-  
-/*
-  
-
-  // Master becomes worker[0]
-  worker(0);
-
-  // Wait for other P-1 worker threads to complete
-
-  // ... add code ...
+  // master waits for all threads to finish
+  for (long i=1;i<P;i++){
+    printf(" ---- joining %ld ----\n", i);
+    pthread_join(threads[i], NULL);
+  }
 
   // Count and print the primes
   #define min(x,y) (((x)<(y)) ? (x) : (y))
   int cnt = 0;
   for (int i=2; i<=N; i++)
-    if (array[i]==1)
+    if (array[i])
       cnt++;
   printf("Found %d primes in [1..%d]: ", cnt, N);
   for (int i=2; i<=min(N,100); i++)
-    if (array[i]==1)
+    if (array[i])
       printf("%d, ", i);
   printf("...\n");
-*/
 }
 
