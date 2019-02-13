@@ -8,5 +8,5 @@ CC = gcc
 	$(CC) -fopenmp -o $@ $< -g -lm
 
 %-pthd%: %-pthd%.c
-	gcc -pthread -o $@ $< -g -lm
+	gcc -pthread -o $@ $< -g -lm 
 
