@@ -15,7 +15,6 @@ int scnt=0;    // sieve count
 int next_up=1; // starting position in sieve
 int limit = 0;
 pthread_mutex_t lock;
-pthread_cond_t cond;
 
 // Find sieve primes 
 void find_sieves() {
@@ -111,7 +110,6 @@ int main(int argc, char **argv) {
   // Create P-1 worker threads
   pthread_t threads[P-1];
   pthread_mutex_init(&lock, NULL);
-  pthread_cond_init(&cond, NULL);
   for (long i=1;i<P;i++){
     pthread_create(&threads[i], NULL, (void*)worker, (void*)i);
   }
