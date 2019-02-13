@@ -35,7 +35,7 @@ void find_sieves() {
       array[i] = i;
     }
   }
-  sieve[limit] = -1;
+  sieve[scnt+1] = -1;
 }
 
 // Keep getting a new sieve, and mark its multiples
@@ -105,6 +105,16 @@ int main(int argc, char **argv) {
   find_sieves();
   printf("Master found %d sieves\n", scnt);
 
+  printf("array\n");
+  for (int i=0;i<N;i++) {
+    printf("%d ", array[i]);
+  }
+  printf("sieve\n");
+  for (int i=0;i<=limit;i++) {
+    printf("%d ", sieve[i]);
+  }
+
+/*
   // Create P-1 worker threads
   pthread_t threads[P-1];
   pthread_mutex_init(&lock, NULL);
@@ -119,7 +129,6 @@ int main(int argc, char **argv) {
   
   
 
-/*
   // Master becomes worker[0]
   worker(0);
 
