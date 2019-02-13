@@ -18,7 +18,7 @@ pthread_mutex_t lock;
 pthread_cond_t cond;
 
 // Find sieve primes 
-void find_sieves(int limit, int* array, int* sieve) {
+void find_sieves() {
   int sieve_limit = (int) floor(sqrt((double)limit));
   for (int i=2;i<=sieve_limit;i++){
     if (array[i]) {
@@ -46,6 +46,7 @@ void worker(long tid) {
   while(1) {
     pthread_mutex_lock(&lock);
     if (next_up != -1) {
+      printf("       next up = %d\n", next_up);
       p = sieve[next_up];
       next_up++;
     } else {
@@ -101,7 +102,7 @@ int main(int argc, char **argv) {
   sieve = (int *) malloc(sizeof(int)*(limit+1));
 
   // Master find sieves
-  find_sieves(limit, array, sieve);
+  find_sieves();
   printf("Master found %d sieves\n", scnt);
 
   // Create P-1 worker threads
