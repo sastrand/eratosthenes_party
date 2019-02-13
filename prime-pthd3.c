@@ -47,11 +47,6 @@ void find_sieves() {
   sieve[scnt] = 0;
   pthread_cond_signal(&cond);
   pthread_mutex_lock(&lock);
-  printf(" -----< sieve >-----\n");
-  for (int i=0;i<=limit;i++){
-    printf("%d ", sieve[i]);
-  }
-  printf("\n -----< sieve >-----\n");
   pthread_mutex_unlock(&lock);
 }
 
@@ -65,7 +60,6 @@ void worker(long tid) {
     while (sieve[next_up] < 0) {
       pthread_cond_wait(&cond, &lock);
     }
-    printf("       next up = %d\n", next_up);
     if (sieve[next_up]) {
       p = sieve[next_up];
       next_up++;
@@ -88,9 +82,6 @@ void worker(long tid) {
       return; 
     }
   }
-
-
-  // ... add code ...
   printf("Worker[%ld] done\n", tid);
 }  
 
@@ -131,6 +122,8 @@ int main(int argc, char **argv) {
   for (long i=1;i<P;i++){
     pthread_create(&threads[i], NULL, (void*)worker, (void*)i);
   }
+  
+  // sleep for 10 ms to make sure workers are ready
   usleep(10000);
   
   // master finds sieves
