@@ -6,6 +6,7 @@
 #include <stdio.h>
 #include <pthread.h>
 #include <math.h>
+#include <unistd.h>
 
 int* array = NULL;
 int* sieve = NULL;
@@ -20,22 +21,38 @@ pthread_cond_t cond;
 // Find sieve primes 
 void find_sieves() {
   int sieve_limit = (int) floor(sqrt((double)limit));
+  int* tmp = (int *) malloc(sizeof(int)*(limit));
+  for (int i=0;i<limit;i++) {
+    tmp[i] = i;
+  }
   for (int i=2;i<=sieve_limit;i++){
-    if (array[i]) {
+    if (tmp[i]) {
+      pthread_mutex_lock(&lock);
+      sieve[scnt] = tmp[i];
+      scnt++;
+      pthread_mutex_unlock(&lock);
+      pthread_cond_signal(&cond);
       for (int j=i+i; j<=limit; j=j+i){
-        array[j] = 0;
+        tmp[j] = 0;
       }
     }
-  }
-  for (int i=0;i<limit;i++){
-    if (array[i] != 0) {
-      sieve[scnt] = array[i];
+  } 
+  for (int i=sieve_limit+1;i<limit;i++){
+    if (tmp[i] != 0) {
+      sieve[scnt] = tmp[i];
       scnt++;
-    } else {
-      array[i] = i;
     }
   }
-  sieve[scnt+1] = 0;
+  free(tmp);
+  sieve[scnt] = 0;
+  pthread_cond_signal(&cond);
+  pthread_mutex_lock(&lock);
+  printf(" -----< sieve >-----\n");
+  for (int i=0;i<=limit;i++){
+    printf("%d ", sieve[i]);
+  }
+  printf("\n -----< sieve >-----\n");
+  pthread_mutex_unlock(&lock);
 }
 
 // Keep getting a new sieve, and mark its multiples
@@ -45,8 +62,11 @@ void worker(long tid) {
   printf("Worker[%ld] starts ...\n", tid);
   while(1) {
     pthread_mutex_lock(&lock);
+    while (sieve[next_up] < 0) {
+      pthread_cond_wait(&cond, &lock);
+    }
+    printf("       next up = %d\n", next_up);
     if (sieve[next_up]) {
-      printf("       next up = %d\n", next_up);
       p = sieve[next_up];
       next_up++;
     } else {
@@ -64,6 +84,7 @@ void worker(long tid) {
       }
     } else {
       printf("---- W[%ld] done ----\n", tid);
+      pthread_cond_broadcast(&cond);
       return; 
     }
   }
@@ -99,10 +120,9 @@ int main(int argc, char **argv) {
 
   // sieve holds primes [1..sqrt(N)] and stop flag value
   sieve = (int *) malloc(sizeof(int)*(limit+1));
-
-  // master finds sieves
-  find_sieves();
-  printf("Master found %d sieves\n", scnt);
+  for (int i=0;i<=limit;i++) {
+    sieve[i] = -1;
+  } 
 
   // creates P-1 worker threads
   pthread_t threads[P-1];
@@ -111,6 +131,11 @@ int main(int argc, char **argv) {
   for (long i=1;i<P;i++){
     pthread_create(&threads[i], NULL, (void*)worker, (void*)i);
   }
+  usleep(10000);
+  
+  // master finds sieves
+  find_sieves();
+  printf("Master found %d sieves\n", scnt);
 
   // master itself becomes worker 0
   worker(0);
