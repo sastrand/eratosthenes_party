@@ -67,14 +67,9 @@ void worker(long tid) {
       return; 
     }
   }
-
-
-  // ... add code ...
   printf("Worker[%ld] done\n", tid);
 }  
 
-// The main routine
-//
 int main(int argc, char **argv) {
   if (argc < 2) {
     printf ("Usage: prime-pthd0 N [P]\n");
@@ -91,8 +86,7 @@ int main(int argc, char **argv) {
 
   printf("Seaching primes in [1..%d] with %d thread(s)\n", N, P);
 
-  // ... add code ...
-  //
+  // allocate space for and initalize the limit and array global arrays
   limit = (int) floor(sqrt((double)N)); 
   array = (int *) malloc(sizeof(int)*(N+1));
   for (int i=2; i<=N; i++)
@@ -101,7 +95,7 @@ int main(int argc, char **argv) {
   // sieve holds primes [1..sqrt(N)] and stop flag value
   sieve = (int *) malloc(sizeof(int)*(limit+1));
 
-  // Master find sieves
+  // master finds sieves
   find_sieves();
   printf("Master found %d sieves\n", scnt);
 
