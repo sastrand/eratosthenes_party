@@ -38,7 +38,7 @@ void find_sieves(int limit, int* array, int* sieve) {
       }
     }
   }
-  for (int i=0;i<=limit;i++){
+  for (int i=0;i<limit;i++){
     if (array[i] != 0) {
       sieve[scnt] = array[i];
       scnt++;
@@ -46,6 +46,7 @@ void find_sieves(int limit, int* array, int* sieve) {
       array[i] = i;
     }
   }
+  sieve[limit] = -1;
 }
 
 // Keep getting a new sieve, and mark its multiples
@@ -87,17 +88,23 @@ int main(int argc, char **argv) {
   for (int i=2; i<=N; i++)
     array[i] = i;
 
-  int* sieve = (int *) malloc(sizeof(int)*limit);
+  // sieve holds primes [1..sqrt(N)] and stop flag value
+  int* sieve = (int *) malloc(sizeof(int)*(limit+1));
 
   // Master find sieves
   find_sieves(limit, array, sieve);
   printf("Master found %d sieves\n", scnt);
-/*
+
   // Create P-1 worker threads
-  pthread_t threads[P];
-  for (long i=0;i<P;i++){
+  pthread_t threads[P-1];
+  for (long i=1;i<P;i++){
     pthread_create(&threads[i], NULL, (void *)worker, (void*)i);
   }
+
+  // master itself becomes worker 0
+  worker(0);
+
+  
   
 
 /*
