@@ -31,25 +31,20 @@ int scnt=0;    // sieve count
 // Find sieve primes 
 void find_sieves(int limit, int* array, int* sieve) {
   int sieve_limit = (int) floor(sqrt((double)limit));
-  printf("limit = %d\nsieve_limit = %d\n", limit, sieve_limit);
-  for (int i=0;i<=sieve_limit;i++){
+  for (int i=2;i<=sieve_limit;i++){
     if (array[i]) {
-      for (int j=i+i; j<=limit; j+=i){
+      for (int j=i+i; j<=limit; j=j+i){
         array[j] = 0;
       }
     }
   }
-  for (int i=0;i<=sieve_limit;i++){
+  for (int i=0;i<=limit;i++){
     if (array[i] != 0) {
       sieve[scnt] = array[i];
       scnt++;
     } else {
       array[i] = i;
     }
-  }
-  printf("----< sieve primes >----");
-  for (int i=0;i<scnt;i++){
-    printf("%d\n", sieve[i]);
   }
 }
 
@@ -97,9 +92,13 @@ int main(int argc, char **argv) {
   // Master find sieves
   find_sieves(limit, array, sieve);
   printf("Master found %d sieves\n", scnt);
-
+/*
   // Create P-1 worker threads
-
+  pthread_t threads[P];
+  for (long i=0;i<P;i++){
+    pthread_create(&threads[i], NULL, (void *)worker, (void*)i);
+  }
+  
 
 /*
   // Master becomes worker[0]
