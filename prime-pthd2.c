@@ -44,8 +44,8 @@ void find_sieves() {
 
 // Keep getting a new sieve, and mark its multiples
 void worker(long tid) {
-  int l = tid*(N/P);
-  int r = l+(N/P)-1;
+  int l = tid*(N/P)+1;
+  int r = l+(N/P);
   int ll = 0, rr = 0, s=0;
   printf("Worker[%ld] starts on range [%d..%d] ...\n", tid, l, r);
       for (int i=0;i<scnt;i++) {
