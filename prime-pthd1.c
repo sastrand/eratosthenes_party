@@ -14,6 +14,7 @@ int N=2, P=1;  // defaults
 int scnt=0;    // sieve count
 int next_up=1; // starting position in sieve
 int limit = 0;
+int* composites_found;
 pthread_mutex_t lock;
 
 // Find sieve primes 
@@ -58,6 +59,7 @@ void worker(long tid) {
         if (array[i]) {
           for (int j=i+i; j<=N; j+=i) {
             array[j] = 0;
+            composites_found[tid]++;
           }
         }
       }
@@ -109,9 +111,11 @@ int main(int argc, char **argv) {
 
   // Create P-1 worker threads
   pthread_t threads[P-1];
+  composites_found = (int *) malloc(sizeof(int)*P);
   pthread_mutex_init(&lock, NULL);
   for (long i=1;i<P;i++){
     pthread_create(&threads[i], NULL, (void*)worker, (void*)i);
+    composites_found[i]=0;
   }
 
   // master itself becomes worker 0
@@ -134,5 +138,11 @@ int main(int argc, char **argv) {
     if (array[i])
       printf("%d, ", i);
   printf("...\n");
+  int sum = 0;
+  for (int i=0;i<P;i++){
+    printf("Thread[%d]:%d\n", i, composites_found[i]);
+    sum = sum + composites_found[i];
+  }
+  printf("Total: %d\n", sum);
 }
 
