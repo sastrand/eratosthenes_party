@@ -63,7 +63,7 @@ void worker(long tid) {
         }
         */
 
-        for (int j=s+s; j<=N; j=j+s) {
+        for (int j=s/l+s; j<=r; j=j+s) {
           if (j >= l && j <= r) {
           array[j] = 0;
           }
