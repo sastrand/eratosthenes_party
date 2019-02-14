@@ -11,6 +11,7 @@
 
 int main(int argc, char **argv) {
   int N=2, P=1;
+  int composites_found[P];
 
   if (argc < 2) {
     printf ("Usage: prime <upper bound> <quant threads>\n");
@@ -40,11 +41,10 @@ int main(int argc, char **argv) {
     if (array[i]) 
       #pragma omp for schedule(static,N/(P*2))
       for (int j=i+i; j<=N; j+=i) {
-        if (fst) {
-          printf("W[%2d] working on prime %i (1st composite:%d)\n",
+          printf("W[%2d] working on prime %i (composite:%d)\n",
                   omp_get_thread_num(), i, j);
-        }
 	    array[j] = 0;
+        composites_found[omp_get_thread_num()]++;
       }
 
   // Count and print the primes
@@ -58,6 +58,11 @@ int main(int argc, char **argv) {
     if (array[i]==1)
       printf("%d, ", i);
   printf("...\n");
-
+  int sum = 0;
+  for (int i=0;i<P;i++){
+    printf("Thread[%d]:%d\n", i, composites_found[i]);
+    sum = sum + composites_found[i];
+  }
+  printf("Total: %d\n", sum);
 }
 
