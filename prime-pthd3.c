@@ -13,7 +13,7 @@ int* sieve = NULL;
 
 int N=2, P=1;  // defaults
 int scnt=0;    // sieve count
-int next_up=1; // starting position in sieve
+int next_up=0; // starting position in sieve
 int limit = 0;
 int* composites_found;
 pthread_mutex_t lock;
@@ -73,14 +73,14 @@ void worker(long tid) {
     pthread_mutex_unlock(&lock);
     if (!done) {
       printf("-- W[%ld] working on prime %d\n", tid, p);
-      for (int i=2; i<=limit; i++) {
-        if (array[i]) {
-          for (int j=i+i; j<=N; j+=i) {
+      //for (int i=2; i<=limit; i++) {
+       // if (array[i]) {
+          for (int j=p+p; j<=N; j+=p) {
             array[j] = 0;
             composites_found[tid]++;
           }
-        }
-      }
+        //}
+      //}
     } else {
       printf("---- W[%ld] done ----\n", tid);
       pthread_cond_broadcast(&cond);
