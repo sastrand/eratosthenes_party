@@ -15,6 +15,7 @@ int scnt=0;    // sieve count
 int next_up=1; // starting position in sieve
 int limit = 0;
 pthread_mutex_t lock;
+pthread_cond_t cond;
 
 // Find sieve primes 
 void find_sieves() {
@@ -28,13 +29,17 @@ void find_sieves() {
   }
   for (int i=0;i<limit;i++){
     if (array[i] != 0) {
-      sieve[scnt] = array[i];
       scnt++;
+      sieve[scnt-1] = array[i];
     } else {
       array[i] = i;
     }
   }
-  scnt--;
+  printf("-----< sieve >-----\n");
+  for (int i=0;i<limit;i++) {
+    printf("%d ", sieve[i]);
+  }
+  printf("\n-------------------\n");
 }
 
 // Keep getting a new sieve, and mark its multiples
@@ -45,29 +50,33 @@ void worker(long tid) {
   printf("Worker[%ld] starts on range [%d..%d] ...\n", tid, l, r);
       for (int i=0;i<scnt;i++) {
         s = sieve[i];
+      /*
+        s = sieve[i];
         ll = (int) ceil(l/(double)s);
         rr = (int) floor(r/(double)s);
         printf("l  = %d\n", l);
         printf("r  = %d\n", r);
         printf("ll = %d expecting floor(%d)\n", ll, l/s);
         printf("rr = %d expecting ceil (%d)\n", rr, r/s);
-        exit(0);
-//        for(int j=(int)ceil((double)l/i);j<(int)floor((double)r/i);j++) {
-        for(int j=ll;j<rr;j++){
+        for(int j=ll*i;j<rr*i;j++){
           sieve[j] = 0;       
         }
-      }
+        */
 
-      /*
-      for (int i=2; i<=limit; i++) {
-        if (array[i]) {
-          for (int j=i+i; j<=N; j+=i) {
-            array[j] = 0;
+        for (int j=s+s; j<=N; j=j+s) {
+          if (j >= l && j <= r) {
+          array[j] = 0;
           }
         }
       }
+      /*
+      if (tid != 0) {
+         printf("Worker[%ld] waiting\n", tid);
+         pthread_mutex_lock(&lock);
+         pthread_cond_wait(&cond, &lock);
+         pthread_mutex_unlock(&lock);
+      }
       */
-      
   printf("Worker[%ld] done\n", tid);
 }  
 
@@ -108,6 +117,7 @@ int main(int argc, char **argv) {
   // initialize sync primitives
   pthread_t threads[P-1];
   pthread_mutex_init(&lock, NULL);
+  pthread_cond_init(&cond, NULL);
 
   // master creates P-1 worker threads
   for (long i=1;i<P;i++){
@@ -118,6 +128,7 @@ int main(int argc, char **argv) {
   worker(0);
 
   // master waits for all threads to finish
+//  pthread_cond_broadcast(&cond);
   for (long i=1;i<P;i++){
     printf(" ---- joining %ld ----\n", i);
     pthread_join(threads[i], NULL);
