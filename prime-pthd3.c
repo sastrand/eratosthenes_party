@@ -30,8 +30,8 @@ void find_sieves() {
       pthread_mutex_lock(&lock);
       sieve[scnt] = tmp[i];
       scnt++;
-      pthread_mutex_unlock(&lock);
       pthread_cond_signal(&cond);
+      pthread_mutex_unlock(&lock);
       for (int j=i+i; j<=limit; j=j+i){
         tmp[j] = 0;
       }
@@ -39,14 +39,17 @@ void find_sieves() {
   } 
   for (int i=sieve_limit+1;i<limit;i++){
     if (tmp[i] != 0) {
+      pthread_mutex_lock(&lock);
       sieve[scnt] = tmp[i];
       scnt++;
+      pthread_cond_signal(&cond);
+      pthread_mutex_unlock(&lock);
     }
   }
   free(tmp);
   sieve[scnt] = 0;
-  pthread_cond_signal(&cond);
   pthread_mutex_lock(&lock);
+  pthread_cond_signal(&cond);
   pthread_mutex_unlock(&lock);
 }
 
