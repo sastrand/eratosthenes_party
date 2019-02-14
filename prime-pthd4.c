@@ -6,6 +6,7 @@
 #include <stdio.h>
 #include <pthread.h>
 #include <math.h>
+#include <unistd.h>
 
 int* array = NULL;
 int* sieve = NULL;
@@ -20,21 +21,37 @@ pthread_cond_t cond;
 // Find sieve primes 
 void find_sieves() {
   int sieve_limit = (int) floor(sqrt((double)limit));
+  int* tmp = (int *) malloc(sizeof(int)*(limit));
+  for (int i=0;i<limit;i++) {
+    tmp[i] = i;
+  }
   for (int i=2;i<=sieve_limit;i++){
-    if (array[i]) {
+    if (tmp[i]) {
+      pthread_mutex_lock(&lock);
+      scnt++;
+      sieve[scnt-1] = tmp[i];
+      pthread_cond_signal(&cond);
+      pthread_mutex_unlock(&lock);
       for (int j=i+i; j<=limit; j=j+i){
-        array[j] = 0;
+        tmp[j] = 0;
       }
     }
-  }
-  for (int i=0;i<limit;i++){
-    if (array[i] != 0) {
+  } 
+  for (int i=sieve_limit+1;i<limit;i++){
+  if (tmp[i] != 0) {
+      pthread_mutex_lock(&lock);
       scnt++;
-      sieve[scnt-1] = array[i];
-    } else {
-      array[i] = i;
+      sieve[scnt-1] = tmp[i];
+      pthread_cond_signal(&cond);
+      pthread_mutex_unlock(&lock);
     }
   }
+  free(tmp);
+  pthread_mutex_lock(&lock);
+  pthread_cond_broadcast(&cond);
+  pthread_mutex_unlock(&lock);
+  sieve[scnt] = -1;
+
   printf("-----< sieve >-----\n");
   for (int i=0;i<limit;i++) {
     printf("%d ", sieve[i]);
@@ -46,18 +63,29 @@ void find_sieves() {
 void worker(long tid) {
   int l = tid*(N/P)+1;
   int r = l+(N/P)-1;
-  int ll = 0, rr = 0, s=0;
+  int s=0;
   printf("Worker[%ld] starts on range [%d..%d] ...\n", tid, l, r);
-      for (int i=0;i<scnt;i++) {
+      for (int i=0;i<limit;i++) {
+        pthread_mutex_lock(&lock);
+        printf("W[%ld] sieve[i] = %d\n", tid, sieve[i]);
+        if (sieve[i] == -1) {
+          pthread_mutex_unlock(&lock);
+          printf("Worker[%ld] done\n", tid);
+          return;
+        }
+        while(!sieve[i]){
+          printf("W[%ld] waiting\n", tid);
+          pthread_cond_wait(&cond, &lock);
+        }
         s = sieve[i];
+        pthread_mutex_unlock(&lock);
         for (int j=s/l+s; j<=r; j=j+s) {
-          if (j >= l && j <= r) {
+          if (j >= l) {
           array[j] = 0;
           }
         }
       }
-  printf("Worker[%ld] done\n", tid);
-}  
+  }  
 
 int main(int argc, char **argv) {
   if (argc < 2) {
@@ -89,9 +117,11 @@ int main(int argc, char **argv) {
   // sieve holds primes [1..sqrt(N)] and stop flag value
   sieve = (int *) malloc(sizeof(int)*(limit+1));
 
-  // master finds sieves
-  find_sieves();
-  printf("Master found %d sieves\n", scnt);
+  printf("-----< starter sieve >-----\n");
+  for (int i=0;i<limit;i++) {
+    printf("%d ", sieve[i]);
+  }
+  printf("\n-------------------\n");
 
   // initialize sync primitives
   pthread_t threads[P-1];
@@ -102,6 +132,13 @@ int main(int argc, char **argv) {
   for (long i=1;i<P;i++){
     pthread_create(&threads[i], NULL, (void*)worker, (void*)i);
   }
+  
+  // sleep for 10ms to make sure workers are ready
+  usleep(10000);
+
+  // master finds sieves
+  find_sieves();
+  printf("Master found %d sieves\n", scnt);
 
   // master itself becomes worker 0
   worker(0);
