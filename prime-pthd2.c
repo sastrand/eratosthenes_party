@@ -14,8 +14,6 @@ int N=2, P=1;  // defaults
 int scnt=0;    // sieve count
 int next_up=1; // starting position in sieve
 int limit = 0;
-pthread_mutex_t lock;
-pthread_cond_t cond;
 
 // Find sieve primes 
 void find_sieves() {
@@ -50,33 +48,12 @@ void worker(long tid) {
   printf("Worker[%ld] starts on range [%d..%d] ...\n", tid, l, r);
       for (int i=0;i<scnt;i++) {
         s = sieve[i];
-      /*
-        s = sieve[i];
-        ll = (int) ceil(l/(double)s);
-        rr = (int) floor(r/(double)s);
-        printf("l  = %d\n", l);
-        printf("r  = %d\n", r);
-        printf("ll = %d expecting floor(%d)\n", ll, l/s);
-        printf("rr = %d expecting ceil (%d)\n", rr, r/s);
-        for(int j=ll*i;j<rr*i;j++){
-          sieve[j] = 0;       
-        }
-        */
-
         for (int j=s/l+s; j<=r; j=j+s) {
           if (j >= l && j <= r) {
           array[j] = 0;
           }
         }
       }
-      /*
-      if (tid != 0) {
-         printf("Worker[%ld] waiting\n", tid);
-         pthread_mutex_lock(&lock);
-         pthread_cond_wait(&cond, &lock);
-         pthread_mutex_unlock(&lock);
-      }
-      */
   printf("Worker[%ld] done\n", tid);
 }  
 
@@ -116,8 +93,6 @@ int main(int argc, char **argv) {
 
   // initialize sync primitives
   pthread_t threads[P-1];
-  pthread_mutex_init(&lock, NULL);
-  pthread_cond_init(&cond, NULL);
 
   // master creates P-1 worker threads
   for (long i=1;i<P;i++){
@@ -128,7 +103,6 @@ int main(int argc, char **argv) {
   worker(0);
 
   // master waits for all threads to finish
-//  pthread_cond_broadcast(&cond);
   for (long i=1;i<P;i++){
     printf(" ---- joining %ld ----\n", i);
     pthread_join(threads[i], NULL);
